@@ -1,8 +1,7 @@
 package com.ismail.calculator
 
-import android.graphics.drawable.Icon
+import android.content.Context
 import android.os.Bundle
-import android.provider.CalendarContract.Colors
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,14 +14,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +33,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import com.ismail.calculator.ui.theme.CalculatorTheme
+
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,12 +59,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Calculator() {
     var mathExpression = remember { mutableStateOf<String>("0") }
-    var answer = remember { mutableStateOf<String?>(null) }
+    var answer = remember { mutableStateOf<String?>(" 3438263482468736847628346283648236843.8") }
 
     val screenHeight = LocalConfiguration.current.screenHeightDp
     val screenWeight = LocalConfiguration.current.screenWidthDp
     val buttonSize: Double = (screenWeight / 4.0) - 10
     val keypadHeight = (screenHeight * 0.7)
+
 
 
     Column(
@@ -87,14 +89,28 @@ fun Calculator() {
 
             contentAlignment = Alignment.CenterEnd
         ) {
-            Column {
-                Text(
-                    mathExpression.value,
-                    fontSize = if (answer.value == null) 35.sp else 28.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                LazyRow {
+                    item {
+                        Text(
+                            mathExpression.value,
+                            fontSize = if (answer.value == null) 40.sp else 28.sp,
+                            fontWeight = FontWeight.SemiBold
+
+                        )
+                    }
+
+                }
                 if (answer.value != null) {
-                    Text(answer.value!!, fontSize = 35.sp, fontWeight = FontWeight.SemiBold)
+                    Box(modifier = Modifier.size(10.dp)) {}
+                    LazyRow {
+                        item {
+                            Text(answer.value!!, fontSize = 35.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
                 }
             }
         }
@@ -204,7 +220,16 @@ fun Calculator() {
                     if (mathExpression.value == "") mathExpression.value = "0"
                 }, buttonSize = buttonSize)
                 GetButtonOfCalculator(text = "=", onClick = {
-                    answer.value = ExpressionCalculator().calculate(mathExpression.value)
+                    try {
+                        answer.value = CalculateInfix.calculateInfix(mathExpression.value).toString()
+                        if (answer.value?.toDouble()?.toLong()
+                                ?.equals(answer.value?.toDouble()) == true
+                        ) {
+                            answer.value = answer.value?.toDouble()?.toLong().toString();
+                        }
+                    } catch (exception: Exception){
+                        answer.value = "Syntax Error"
+                    }
 
                 }, buttonSize = buttonSize)
             }
